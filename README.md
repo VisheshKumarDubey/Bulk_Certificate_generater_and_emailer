@@ -1,4 +1,4 @@
-# Bulk_Certificate_generater_and_emailer
+# Dynamic-Certificates-and-Mailing-tool
 We had an event where we had to mail e-certificates to every attendee when I was working as a co-convener in my
 undergraduate society. It would have taken days if I had to transmit them one at a time. So I took inspiration from
 various blogs and developed this code to accept a list of students along with some information and then email unique
