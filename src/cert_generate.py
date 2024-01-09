@@ -1,81 +1,45 @@
-# import required classes
-import img2pdf 
-import os 
-import xlrd
+import img2pdf
+import os
 from PIL import Image, ImageDraw, ImageFont
 
-path = os.path.dirname(__file__)
 def certificateGenerate(sno, name, department, event_name, event_date, email):
-    # create Image object with the input image
+    path = os.path.dirname(__file__)
+    template_path = os.path.join(path, '../templates', 'template.jpg')
+    font_path = os.path.join(path, '../font')
 
-    image = Image.open(os.path.dirname(path)+'/templates/template.jpg')
-    
+    image = Image.open(template_path)
     draw = ImageDraw.Draw(image)
- 
-    font = ImageFont.truetype(os.path.dirname(path)+'/font/PTSansNarrow-Bold.ttf', size=35)
-    font2 = ImageFont.truetype(os.path.dirname(path)+'/font/PTSansNarrow-Bold.ttf', size=95)
-    font3 = ImageFont.truetype(os.path.dirname(path)+'/font/PTSansNarrow-Bold.ttf', size=65)
-    # starting position of the message
+    font = ImageFont.truetype(os.path.join(font_path, 'GreatVibes-Regular.ttf'), size=95)
 
-    (x, y) = (675, 50)
-    xt=sno
-    if xt < 10 :
-        message = "Sr.No. UU/CSS/2019/E009/00"+ str(xt)+"P"
-    elif xt< 99 :
-        message = "Sr.No. UU/CSS/2019/E009/0"+ str(xt)+"P"
-    else :
-        message = "Sr.No. UU/CSS/2019/E009/"+ str(xt)+"P"
-    color = 'rgb(0, 0, 0)' # black color
+    # Customize as needed
+    max_text_width = 400  # Maximum width allowed for text
+    text_padding = 10  # Padding on both sides
 
-    # draw the message on the background
+    # Calculate text size for adjustment
+    #text_width, text_height = draw.textsize(name, font=font)
+    text_width = len(name) 
+    adjusted_x = (image.width/2 - (text_width + text_padding)) / 2
 
-    draw.text((x, y), message, fill=color, font=font)
-    (x, y) = (950, 898)
-    color = 'rgb( 0, 0, 0)' # white color
-    draw.text((x, y), name, fill=color, font=font2)
+    # Adjusting text placement based on the text width and image width
+    (x, y) = (adjusted_x, 690)
 
-    (x, y) = (1550, 1020)
-    color = 'rgb( 0, 0, 0)' # white color
-    draw.text((x, y), department, fill=color, font=font2)
+    # Capitalize name to have the first letter of each word in capital
+    name = name.title()
 
-    (x, y) = (1375, 1145)
-    color = 'rgb( 0, 0, 0)' # white color
-    draw.text((x, y), "Participation", fill=color, font=font2)
+    draw.text((x, y), name, fill='rgb(233, 183, 46)', font=font)
 
-    (x, y) = (1050, 1290)
-    color = 'rgb( 0, 0, 0)' # white color
-    draw.text((x, y), event_name, fill=color, font=font3)
+    # Save the edited image
+    output_image_path = os.path.join(path, '../output', 'jpg', f'{email}.jpg')
+    image.save(output_image_path)
 
-    (x, y) = (1990, 1290)
-    color = 'rgb( 0, 0, 0)' # white color
-    draw.text((x, y), event_date, fill=color, font=font3)
+    # Create PDF
+    output_pdf_path = os.path.join(path, '../output', 'pdf', f'{email}.pdf')
+    with Image.open(output_image_path) as img:
+        pdf_bytes = img2pdf.convert(img.filename)
+        with open(output_pdf_path, "wb") as file:
+            file.write(pdf_bytes)
+    
+    print("Successfully created PDF file")
 
-    # save the edited image
-    
-    image.save(os.path.dirname(path)+'/output/jpg/'+email+".jpg")
-    img_path = os.path.dirname(path)+'/output/jpg/'+email+".jpg"
-    
-    # storing pdf path 0
-    pdf_path = os.path.dirname(path)+'/output/pdf/'+email+".pdf"
-    
-    # opening image 
-    image = Image.open(img_path) 
-    
-    # converting into chunks using img2pdf 
-    pdf_bytes = img2pdf.convert(image.filename) 
-    
-    # opening or creating pdf file 
-    file = open(pdf_path, "wb") 
-    
-    # writing pdf files with chunks 
-    file.write(pdf_bytes) 
-    
-    # closing image file 
-    image.close() 
-    
-    # closing pdf file 
-    file.close() 
-    
-    # output 
-    print("Successfully made pdf file")
-   
+# Example usage:
+# certificateGenerate(1, "John Doe", "Department", "Event Name", "Event Date", "john@example.com")

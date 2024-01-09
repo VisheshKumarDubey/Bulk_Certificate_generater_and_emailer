@@ -1,92 +1,66 @@
-# Python code to illustrate Sending mail with attachments 
-# from your Gmail account 
-
-# libraries to be imported 
-import smtplib 
-from email.mime.multipart import MIMEMultipart 
-from email.mime.text import MIMEText 
-from email.mime.base import MIMEBase 
-from email import encoders 
-
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.base import MIMEBase
+from email import encoders
 import xlrd
 import os
+
 # import required classes
 from cert_generate import certificateGenerate
-from PIL import Image, ImageDraw, ImageFont 
-  
-path = os.path.dirname(__file__)
-def sendMail(file):
-    wb = xlrd.open_workbook(file) 
-    sheet = wb.sheet_by_index(0) 
-    
-    sheet.cell_value(0, 0) 
-    
 
-    for x in range(1,sheet.nrows):
-        name=sheet.row_values(x)[1]
+def sendMail(file):
+    wb = xlrd.open_workbook(file)
+    sheet = wb.sheet_by_index(0)
+
+    for x in range(1, sheet.nrows):
+        name = sheet.row_values(x)[2]
         len1 = name.find(' ')
         name = name[0:len1]
-        email=sheet.row_values(x)[0]
-        fromaddr = input('Enter your Email address : ')
-        password = input('Enter your password  : ')
-        toaddr =email
+        email = str(sheet.row_values(x)[1])
+        fromaddr = "thecampusmonk@gmail.com"  # Your Gmail address
+        password = "jGsdzKTHBIrODA4k"  # Your Gmail password
+        toaddr = email
+        email = toaddr[0:toaddr.find('@')]
+        
         print("\nSending.. to "+name+" at "+email)
-        len1 = toaddr.find('@')
-        email = toaddr[0:len1]
         
+        # Create the HTML content for the email body
+        html_content = f"""
+        <html>
+            <body>
+                <p>Hi {name},</p>
+                <p>Challenge conquered! Let's share our win on Instagram/LinkedIn — You can tag us there, and we'll surely give a shoutout!</p>
+                <p>Please find your certificate in the attachments.</p>
+                </br>
+                <p>Regards</p>
+                <p><strong>Rachit Rastogi</strong></p>
+                <p>Founder - Campusmonk</p>
+            </body>
+        </html>
+        """
 
-        # instance of MIMEMultipart 
-        msg = MIMEMultipart() 
+        # Create the email message
+        msg = MIMEMultipart()
+        msg['From'] = fromaddr
+        msg['To'] = toaddr
+        msg['Subject'] = "Campusmonk - Certificate for Instagram Clone"
 
-        # storing the senders email address 
-        msg['From'] = fromaddr 
-        
-        year =2
+        # Attach HTML content as the email body
+        msg.attach(MIMEText(html_content, 'html'))
 
-        # storing the receivers email address 
-        msg['To'] = toaddr 
+        # Attach the certificate PDF file
+        filename = email + ".pdf"
+        attachment_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..','output','pdf' , f'{email}.pdf'))
+        with open(attachment_path, 'rb') as attachment:
+            part = MIMEBase('application', 'octet-stream')
+            part.set_payload(attachment.read())
+            encoders.encode_base64(part)
+            part.add_header('Content-Disposition', f'attachment; filename= {filename}')
+            msg.attach(part)
 
-        # storing the subject 
-        msg['Subject'] = "Subject"
-
-        # string to store the body of the mail 
-
-        body = "Body"
-        # attach the body with the msg instance 
-        msg.attach(MIMEText(body, 'plain')) 
-
-        # open the file to be sent 
-        filename = email+".pdf"
-        attachment = open(os.path.dirname(path)+'/output/pdf/'+email+'.pdf', "rb") 
-
-        # instance of MIMEBase and named as p 
-        p = MIMEBase('application', 'octet-stream') 
-
-        # To change the payload into encoded form 
-        p.set_payload((attachment).read()) 
-
-        # encode into base64 
-        encoders.encode_base64(p) 
-
-        p.add_header('Content-Disposition', "attachment; filename= %s" % filename) 
-
-        # attach the instance 'p' to instance 'msg' 
-        msg.attach(p) 
-
-        # creates SMTP session 
-        s = smtplib.SMTP('smtp.gmail.com', 587) 
-
-        # start TLS for security 
-        s.starttls() 
-
-        # Authentication 
-        s.login(fromaddr, password) 
-
-        # Converts the Multipart msg into a string 
-        text = msg.as_string() 
-
-        # sending the mail 
-        s.sendmail(fromaddr, toaddr, text) 
-
-        # terminating the session 
-        s.quit() 
+        # Create SMTP session and send the email
+        with smtplib.SMTP('smtp-relay.brevo.com', 587) as server:
+            server.starttls()
+            server.login(fromaddr, password)
+            server.sendmail(fromaddr, toaddr, msg.as_string())
